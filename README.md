@@ -5,7 +5,7 @@ This project of a Key Logger is for **educational purposes**. Use it **only** in
 
 ## Description
 
-This keylogger records keystrokes and saves them locally in a temporary file. When the number of captured keystrokes reaches a predefined threshold, the content is automatically sent to a Telegram bot controlled by the operator.
+This keylogger records keystrokes and saves them locally in a temporary buffer. When the number of captured keystrokes reaches a predefined threshold, the content is automatically sent to a Telegram bot controlled by the operator.
 
 The bot also supports a remote command `/kill <machine_id>` which allows stopping the keylogger execution on a specific machine by remote.
 
