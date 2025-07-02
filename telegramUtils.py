@@ -22,7 +22,6 @@ def initChatID():
     except Exception as e:
         raise RuntimeError(f"error getting chat_id,: {e},\nTRY SENDING A MESSAGE TO THE BOT BEFORE STARTING")
 
-
 def sendFromFile(LOG_FILE):
     global chat_id
     if chat_id is None:
@@ -36,6 +35,24 @@ def sendFromFile(LOG_FILE):
         raise RuntimeError(f"Error reading file: {e}")
 
     #... to send to the bot
+    send_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    params = {"chat_id": chat_id, "text": text}
+    response = requests.get(send_url, params=params)
+
+    if debugging:
+        if response.status_code == 200:
+            print("[++]Message sent successfully")
+        else:
+            print("[--]Error sending message", response.text)
+
+def sendFromBuffer(buffer):
+    text=''.join(buffer)
+    print(f"got: {text}")
+    global chat_id
+    if chat_id is None:
+        raise RuntimeError("Chat ID not initialized")
+
+    #send to the bot
     send_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     params = {"chat_id": chat_id, "text": text}
     response = requests.get(send_url, params=params)
