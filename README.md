@@ -1,11 +1,11 @@
 # KeyL
 
-This program records keystrokes and sends them to a telegram bot, until the attacker send the command /kill so the program delete itself from the target's machine.
+This program records keystrokes and sends them to a telegram bot, until the attacker send the command `/kill` so the program delete itself from the target's machine.
 
 It require root access to the target.
 
 ## Disclaimer:
-This project of a Key Logger is for **educational purposes**. Use it **only** in controlled environments or virtual machines that you own. Do **not** deploy or use this code on any system without explicit permission from the owner. Misuse of this software may violate laws and going to jail it's dumb so use the brain.
+This project of a Key Logger is for **educational purposes**, it has been created only with my mere knowledge. Do **not** deploy or use this code on any system without explicit permission from the owner. Misuse of this software may violate laws and going to jail for stupid reasons it's dumb.
 
 ## How2UseIt
 
