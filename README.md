@@ -1,6 +1,6 @@
 # KeyL
 
-This program records keystrokes and sends them to a telegram bot, until the attacker send the command `/kill` so the program delete itself from the target's machine.
+This program records keystrokes and sends them to a telegram bot, until the attacker send the `/kill` command so the program delete itself from the target's machine.
 
 It require root access to the target.
 
@@ -9,7 +9,9 @@ This project of a Key Logger is for **educational purposes**, it has been create
 
 ## How2UseIt
 
-Once you gain access to the target machine, copy and paste the content of `toBePasted.txt` to activate the persistent logger.
+Once you gain access to the target machine, you have to options:
+1. execute the `make.sh` .
+2. copy and paste the content of `toBePasted.txt` .
 
 You need to configure it for your own setup. Here's how:
 
