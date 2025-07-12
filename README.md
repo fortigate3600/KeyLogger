@@ -22,7 +22,7 @@ But before you need to configure it for your own setup. Here's how:
 2. **Customize Logger Behavior (Optional)**  
    If you're geek enough you can configure the logger by modifying flags inside `KeyL.py`.  
    If you make changes, you'll need to build your own version to install:
-   By default, `toBePasted.txt` installs the static version hosted on GitHub:
+   By default, `make.sh` installs the static version hosted on GitHub:
    ```bash
    wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
    ```
