@@ -35,7 +35,7 @@ send the command `/kill <machine_id>` to the Telegram bot.
 
 
 ## How it works
-<img width="1233" height="516" alt="killSwitchMechanism" src="https://github.com/user-attachments/assets/aac92346-7d68-4f4b-8460-fb7a1a382a45" />
+<img width="800" height="400" alt="killSwitchMechanism" src="https://github.com/user-attachments/assets/aac92346-7d68-4f4b-8460-fb7a1a382a45" />
 
 The persistence mechanism is simple (and quite weak): if the logger process is killed, it gets respawned automatically by a cronjob calling launc.sh.
 I have hidden the .sh files in the /tmp directory. I could have made it stealthier, but this project is just for academic purposes.
